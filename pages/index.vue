@@ -149,7 +149,7 @@ onMounted(() => {
 }
 
 .nm-typing-container {
-  height: calc(6vw + 1rem);
+  height: calc(6vw + 2rem);
   max-width: 100vw;
   font-size: 6vw;
   font-weight: 700;
