@@ -11,6 +11,56 @@ export default defineNuxtPlugin((NuxtApp)=> {
 })
 ```
 
+## Postcss
+
+### [tailwindcss for nuxt](https://tailwindcss.com/docs/guides/nuxtjs)
+
+```sh
+npm install -D tailwindcss postcss autoprefixer
+npx tailwindcss init
+```
+
+```js nuxt.config.js
+// nuxt.config.js
+export default defineNuxtConfig({
+  devtools: { enabled: true },
+  css: ['~/assets/css/main.css'],
+  postcss: {
+    plugins: {
+      tailwindcss: {},
+      autoprefixer: {},
+    },
+  },
+})
+```
+
+```js tailwind.config.js
+// tailwind.config.js
+module.exports = {
+  content: [
+    "./components/**/*.{js,vue,ts}",
+    "./layouts/**/*.vue",
+    "./pages/**/*.vue",
+    "./plugins/**/*.{js,ts}",
+    "./app.vue",
+    "./error.vue",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+```
+
+`./assets/css/main.css` -> `css` of `nuxt.config.js`
+
+```css main.css
+/* main.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```
+
 ## Install Problem
 
 print some errors when to action the `yarn add -D less` command.
