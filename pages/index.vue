@@ -5,8 +5,10 @@ definePageMeta({
 useSeoMeta({
   title: 'yooooooson'
 })
-
-import { ref } from 'vue';
+// 设备模式切换
+const deviceMode = useDeviceModeStore()
+// 命令行默认符号
+const DEFAULT_CMD = '->'
 // 输入功能
 const text = ref('')
 //TODO - 光标移动功能
@@ -19,12 +21,13 @@ const text = ref('')
 // 查询内容
 const msg = ref('')
 const name = ref('')
+const cmd = ref(DEFAULT_CMD)
 const tags = ref<string[]>([])
-// 查询
-const handleQuery = async (value: string) => {
+// 输入处理
+const handleTyping = async (value: string) => {
   // Tag判断
-  let _tag: string | undefined
-  if (_tag = /^#[a-zA-z0-9_]+/.exec(value)?.[0]) {
+  let _tag = /^#[a-zA-z0-9_]+/.exec(value)?.[0]
+  if (_tag) {
     const tag = _tag.split('#')[1]
     // 去重
     if (!tags.value.includes(tag)) {
@@ -32,28 +35,40 @@ const handleQuery = async (value: string) => {
     }
   }
   // 命令判断
-  switch (value) {
-    case 'ls': {
-      handleClear()
-      msg.value = 'list'
-      break;
-    }
-    case 'clear': {
-      handleClear('all')
-      break;
-    }
-    case 'help': {
-      handleClear()
-      msg.value = `
+  console.log(value === 'clear');
+  if (value === 'clear' || cmd.value === '->') {
+    switch (value) {
+      case 'ls': {
+        handleClear()
+        msg.value = 'list'
+        break;
+      }
+      case 'clear': {
+        handleClear('all')
+        break;
+      }
+      case 'find': {
+        handleQuery()
+        break;
+      }
+      case 'help': {
+        handleClear()
+        msg.value = `
       ls\t: list
       help\t: help
       clear\t: clear all
-      <Esc>\t: clear command
+      <Esc>\t: cleartyping 
       `
-      break;
+        break;
+      }
+      default:
+        break;
     }
-    default:
-      break;
+  } else {
+    if (!_tag) {
+      //TODO - 有tag的查询
+      msg.value = value
+    }
   }
   // 非命令处理
   try {
@@ -65,19 +80,28 @@ const handleQuery = async (value: string) => {
     console.log(result, value);
   } catch (error) { }
   // 清除命令行
-  handleClear('command')
+  handleClear('typing')
+}
+// 查询命令
+const handleQuery = (value?: string) => {
+  if (value) {
+
+  } else {
+    cmd.value = 'find=>'
+  }
 }
 // 清除
-const handleClear = (type: ('msg' | 'command' | 'all') = 'command') => {
+const handleClear = (type: ('msg' | 'typing' | 'all') = 'typing') => {
   switch (type) {
     case 'all': {
       tags.value = []
+      cmd.value = DEFAULT_CMD
     }
     case 'msg': {
       msg.value = ''
       name.value = ''
     }
-    case 'command': {
+    case 'typing': {
       text.value = ''
     }
     default:
@@ -100,41 +124,42 @@ onMounted(() => {
         break;
       }
       case 'Escape': {
-        handleClear('command')
+        handleClear('typing')
         break;
       }
       case 'Enter': {
-        handleQuery(text.value)
+        handleTyping(text.value)
         break;
       }
       default: {
-        if (/^[A-Za-z0-9\-,.?\/> \-_#]$/.test(e.key)) {
+        if (/^[A-Za-z0-9\-,.?\/> \-_#!]$/.test(e.key)) {
           text.value += e.key
         }
         break;
       }
     }
     //TODO - @input功能
-    // handleQuery(text.value)
+    // handleTyping(text.value)
   })
 })
 </script>
 
 <template>
-  <a-space direction="vertical" align="center" fill>
-    <a-space direction="vertical" align="center" fill style="margin-top: 10vw;">
+  <a-space class="y-search-container" direction="vertical" align="center" fill>
+    <div>{{ deviceMode.mode }}</div>
+    <a-space direction="vertical" align="center" fill style="">
       <!-- TODO - 光标移动功能 -->
-      <!-- <div id="nm-typing-container">
-        <span style="color: transparent;">{{ underscoreString }}</span><span class="nm-underscore"></span>
+      <!-- <div id="y-typing-container">
+        <span style="color: transparent;">{{ underscoreString }}</span><span class="y-underscore"></span>
       </div> -->
       <pre
-        class="nm-typing-container"><span class="nm-command-head">-></span>{{ text }}<span class="nm-underscore"></span></pre>
+        class="y-typing-container"><span class="y-typing-head">{{ cmd }}</span>{{ text }}<span class="y-underscore"></span></pre>
     </a-space>
     <a-space>
       <a-tag v-for="tag in tags" size="large" @close="handleCloseTag(tag)" closable>{{ tag }}</a-tag>
     </a-space>
     <a-space direction="vertical" align="center" fill>
-      <pre class="nm-msg-container">{{ msg }}</pre>
+      <pre class="y-msg-container">{{ msg }}</pre>
     </a-space>
     <a-space v-if="name === 'content:index.md'" direction="vertical" align="center" fill>
       <ContentDoc />
@@ -148,24 +173,37 @@ onMounted(() => {
   src: url('~/assets/fonts/FiraCode-Regular.ttf');
 }
 
-.nm-typing-container {
-  height: calc(6vw + 2rem);
+.y-search-container {
+  padding: 12vw 0 0 6vw;
+  box-sizing: border-box;
+}
+
+.y-typing-container {
+  --y-color-grey: #c9cdd4;
+  --y-typing-size: 6vw;
+  --y-typing-head-size: 4.2vw;
+  --y-underscore-width: 3vw;
+  --y-underscore-boder: 0.8vw;
+  height: calc(var(--y-typing-size) + 2rem);
   max-width: 100vw;
-  font-size: 6vw;
+  font-size: var(--y-typing-size);
   font-weight: 700;
   font-family: 'Fira Code';
   overflow-x: hidden;
 
-  &>.nm-command-head {
-    font-size: 4.2vw;
-    color: #c9cdd4;
+  &>.y-typing-head {
+    font-size: var(--y-typing-head-size);
+    color: var(--y-color-grey)
   }
 
-  &>.nm-underscore {
+  &>.y-underscore {
     display: inline-block;
-    width: 3vw;
+    width: var(--y-underscore-width);
+    height: calc(2 * var(--y-underscore-width));
+    margin-right: calc(2 * var(--y-underscore-width));
+    transform: translateY(0.8rem);
     animation: blink 1s step-end infinite;
-    border-bottom: 0.8vw solid #000;
+    border-bottom: var(--y-underscore-boder) solid #000;
   }
 }
 
@@ -181,7 +219,7 @@ onMounted(() => {
   }
 }
 
-.nm-msg-container {
+.y-msg-container {
   font-size: 1.2rem;
 }
 </style>

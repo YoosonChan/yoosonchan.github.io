@@ -3,17 +3,53 @@
 ## Plugins
 
 ```ts arco-design.ts
+// plugins/arco-design.ts
 import ArcoVue from '@arco-design/web-vue';
+// 图标库
+import ArcoVueIcon from '@arco-design/web-vue/es/icon'
 import '@arco-design/web-vue/dist/arco.css';
 
 export default defineNuxtPlugin((NuxtApp)=> {
   NuxtApp.vueApp.use(ArcoVue)
+  NuxtApp.vueApp.use(ArcoVueIcon)
+})
+```
+
+## Modules
+
+### [pinia for Nuxt](https://pinia.vuejs.org/ssr/nuxt.html)
+
+```sh
+yarn add pinia @pinia/nuxt
+```
+
+```js
+// nuxt.config.js
+export default defineNuxtConfig({
+  // ... other options
+  modules: [
+    // ...
+    '@pinia/nuxt',
+  ],
+})
+```
+
+#### Auto imports
+
+```js
+// nuxt.config.ts
+export default defineNuxtConfig({
+  // ... other options
+  modules: ['@pinia/nuxt'],
+  pinia: {
+    storesDirs: ['./stores/**', './custom-folder/stores/**'],
+  },
 })
 ```
 
 ## Postcss
 
-### [tailwindcss for nuxt](https://tailwindcss.com/docs/guides/nuxtjs)
+### [tailwindcss for Nuxt](https://tailwindcss.com/docs/guides/nuxtjs)
 
 ```sh
 npm install -D tailwindcss postcss autoprefixer
