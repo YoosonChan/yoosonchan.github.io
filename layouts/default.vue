@@ -1,5 +1,5 @@
 <template>
-  <div class="contaniner fixed top-0 inset-x-0 z-0 y-layout-container">
+  <div class="fixed top-0 inset-x-0 z-0 p-0 y-layout-container">
     <AppHeader />
     <slot></slot>
   </div>
@@ -7,7 +7,9 @@
 
 <style scoped lang="less">
 .y-layout-container {
-  height: 100vw;
-  overflow: scroll;
+  --y-color-grey: #c9cdd4;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
 }
 </style>

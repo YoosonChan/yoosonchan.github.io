@@ -97,6 +97,30 @@ module.exports = {
 @tailwind utilities;
 ```
 
+## SEO and Meta
+
+### Viewport
+
+```ts
+export default defineNuxtConfig({
+  app: {
+    head: {
+      charset: 'utf-8',
+      viewport: 'width=device-width, initial-scale=1',
+    }
+  }
+})
+
+```
+
+## Development Problem
+
+### Focus
+
+Canceling when using the "Tab" key will focus on some html elements.
+
+We can set the "[`tabindex`](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/tabindex)" attribute on the HTML element to control the [focus]((https://zh.javascript.info/focus-blur)) on the HTML elements when using the "`Tab`" key. Set `-1` to the "`tabindex`" attribute on an HTML element to represent that miss to focus on that HTML element using the "`Tab`" key.
+
 ## Install Problem
 
 print some errors when to action the `yarn add -D less` command.
