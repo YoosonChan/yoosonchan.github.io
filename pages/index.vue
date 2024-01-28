@@ -25,19 +25,28 @@ const tooltipVisible = computed(() => {
 // })
 // 查询内容
 const msg = ref('')
-const name = ref('')
+// 命令
 const cmd = ref(DEFAULT_CMD)
+// tag
 const tags = ref<string[]>([])
+// 查询结构
+const result = ref()
+const markdown = ref()
 // 输入处理(键入Enter)
-const handleText = async (value: string) => {
+const handleText = (value: string) => {
   // Tag判断
-  let _tag = /^#[a-zA-z0-9_]+/.exec(value)?.[0]
+  const _tag = /^#[a-zA-z0-9_]+/.exec(value)?.[0]
   if (_tag) {
     const tag = _tag.split('#')[1]
     // 去重
     if (!tags.value.includes(tag)) {
       tags.value.push(tag)
     }
+  }
+  // 路由判断
+  const route = /^\/[a-zA-z0-9_?=]+/.exec(value)?.[0]
+  if (route) {
+    navigateTo(route)
   }
   // 命令判断
   if (value === 'clear' || cmd.value === '->') {
@@ -69,31 +78,45 @@ const handleText = async (value: string) => {
         break;
     }
   } else {
-    if (!_tag) {
-      // TODO - 有tag的查询
-      msg.value = value
-    }
+    // 查询命令
     if (cmd.value === 'find=>') {
-      handleQuery(value)
+      if (!_tag) {
+        // TODO - 有tag的查询
+        msg.value = value
+        handleQuery(value)
+      }
     }
   }
-  // 非命令处理(常规输入)
-  try {
-    const result = await queryContent('/').where({ title: value }).findOne()
-    if (result) {
-      msg.value = result.description
-      name.value = result._id
-    }
-    console.log(result, value);
-  } catch (error) { }
   // 清除命令行
   handleClear('typing')
 }
 // 查询命令
-const handleQuery = (value?: string) => {
+const handleQuery = async (value?: string) => {
   if (value) {
-    // TODO - 查询
-    console.log('query-> ', value);
+    // TODO - 查询Tag功能
+    const _tag = tags.value[0]
+    const path = _tag ?? '/'
+    try {
+      let _result
+      console.log('before', _tag, path);
+      if (!_tag) {
+        _result = await queryContent(path).where({ title: value }).findOne()
+      } else {
+        _result = await queryContent(path).findOne()
+      }
+      console.log(_result, value);
+      if (_result._extension === 'md') {
+        markdown.value = _result
+      } else {
+        if (_result.body) {
+          result.value = _result.body
+        } else {
+          msg.value = _result.description
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
   } else {
     cmd.value = 'find=>'
   }
@@ -104,10 +127,11 @@ const handleClear = (type: ('msg' | 'typing' | 'all') = 'typing') => {
     case 'all': {
       tags.value = []
       cmd.value = DEFAULT_CMD
+      result.value = undefined
+      markdown.value = undefined
     }
     case 'msg': {
       msg.value = ''
-      name.value = ''
     }
     case 'typing': {
       text.value = ''
@@ -127,7 +151,6 @@ const addTypingListener = () => {
 // 输入功能：事件监听
 const handleTyping = (e: KeyboardEvent) => {
   //TODO - 光标移动功能
-  // console.log(e.key);
   switch (e.key) {
     case 'Backspace': {
       text.value = text.value.slice(0, -1)
@@ -142,7 +165,7 @@ const handleTyping = (e: KeyboardEvent) => {
       break;
     }
     default: {
-      if (/^[A-Za-z0-9\-,.?\/> \-_#!]$/.test(e.key)) {
+      if (/^[A-Za-z0-9\-,.?\/> \-_=#!]$/.test(e.key)) {
         text.value += e.key
       }
       break;
@@ -152,7 +175,9 @@ const handleTyping = (e: KeyboardEvent) => {
   // handleText(text.value)
 }
 onMounted(() => {
-  addTypingListener()
+  addTypingListener();
+  // 清除聚焦问题
+  (document.querySelector('.y-typing-container')! as HTMLElement).focus()
 })
 onUnmounted(() => {
   document.removeEventListener('keydown', handleTyping)
@@ -160,7 +185,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <a-space class="fixed top-0 inset-x-0 z-10 y-search-container" direction="vertical" align="center" fill>
+  <a-space class="y-search-container" direction="vertical" align="center" fill>
     <a-space direction="vertical" align="center" fill style="">
       <!-- TODO - 光标移动功能 -->
       <!-- <div id="y-typing-container">
@@ -180,10 +205,15 @@ onUnmounted(() => {
       <a-tag v-for="tag in tags" size="large" @close="handleCloseTag(tag)" closable>{{ tag }}</a-tag>
     </a-space>
     <a-space direction="vertical" align="center" fill>
-      <pre class="translate-x-[-16%] y-msg-container">{{ msg }}</pre>
+      <pre class="translate-x-[-4.8vw] y-msg-container">{{ msg }}</pre>
     </a-space>
-    <a-space v-if="name === 'content:index.md'" class="" direction="vertical" align="center" fill>
-      <ContentDoc />
+    <a-space direction="vertical" align="center" fill>
+      <pre class="translate-x-[-4.8vw] y-msg-container">{{ result }}</pre>
+    </a-space>
+    <a-space class="translate-x-[-4.8vw]" direction="vertical" align="center" fill>
+      <ContentRenderer v-if="markdown" :value="markdown">
+        <ContentRendererMarkdown :value="markdown" />
+      </ContentRenderer>
     </a-space>
   </a-space>
 </template>
@@ -196,12 +226,9 @@ onUnmounted(() => {
 
 .y-search-container {
   --y-container-padding: 6vw;
-  width: 100vw;
-  height: 100vh;
-  padding: 12vw var(--y-container-padding) 0 var(--y-container-padding);
+  padding-top: 9vw;
   // TODO - scroll probllem
   // overflow-y: scroll;
-  box-sizing: border-box;
 
   .y-typing-container {
     --y-typing-size: 5.4vw;

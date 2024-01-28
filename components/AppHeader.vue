@@ -1,22 +1,30 @@
 <script setup lang="ts">
 const isMobile = ref(false)
 const deviceMode = useDeviceModeStore()
+const route = useRoute()
 watch(() => isMobile.value, () => {
   deviceMode.changeMode(isMobile.value ? 'phone' : 'pc')
 })
 const handleChangeBtnClick = () => {
-  isMobile.value = !isMobile.value;
-  (document.querySelector('.y-typing-container')! as HTMLElement).focus()
+  isMobile.value = !isMobile.value
+  if (route.path === '/') {
+    // 首页消除聚焦enter触发问题
+    (document.querySelector('.y-typing-container')! as HTMLElement).focus()
+  }
 }
 </script>
 
 <template>
   <div class="fixed top-0 inset-x-0 z-50 flex justify-between items-center py-3 backdrop-blur-xl y-header-container"
     :class="isMobile ? 'px-3 y-mobile-header-container' : 'flex-col'">
-    <img class="rounded-full shadow-md y-logo" src="../assets/img/logo.png" alt="logo">
-    <div class="cursor-pointer y-header-title-container"
-      :class="isMobile ? 'translate-x-[-3vw]' : 'translate-x-0 translate-y-[-3vw] rotate-[-90deg]'">
-      yooooooson</div>
+    <NuxtLink to="/">
+      <img class="rounded-full shadow-md y-logo" src="../assets/img/logo.png" alt="logo">
+    </NuxtLink>
+    <NuxtLink to="/">
+      <div class="cursor-pointer y-header-title-container"
+        :class="isMobile ? 'translate-x-[-3vw]' : 'translate-x-0 translate-y-[-3vw] rotate-[-90deg]'">
+        yooooooson</div>
+    </NuxtLink>
     <a-button class="shadow-md y-device-change-btn" @click="handleChangeBtnClick" shape="circle" tabindex="-1">
       <template v-if="isMobile">
         <icon-computer />
